@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, redirect, render_template, request, send_file, session, url_for
 
 import main as lab
 
@@ -79,6 +79,29 @@ def create_app() -> Flask:
         else:
             flash(f"Ошибка: доступ к серверу «{node_id}» запрещён.", "danger")
         return redirect(url_for("nodes"))
+
+    @app.get("/stats")
+    def stats():
+        redir = require_login()
+        if redir:
+            return redir
+        s = session.get("stats", lab.new_stats())
+        table_text = lab.format_tables(s)
+        charts = []
+        charts_dir = lab.MAIN_CHARTS_DIR
+        if charts_dir.is_dir():
+            charts = sorted(p.name for p in charts_dir.glob("*.png"))
+        return render_template("stats.html", table_text=table_text, charts=charts)
+
+    @app.get("/charts/<path:filename>")
+    def chart_image(filename):
+        redir = require_login()
+        if redir:
+            return redir
+        path = lab.MAIN_CHARTS_DIR / filename
+        if not path.exists():
+            return "not found", 404
+        return send_file(path, mimetype="image/png")
 
     return app
 
