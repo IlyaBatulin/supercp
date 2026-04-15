@@ -1,24 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Минимальная модель контроля доступа:
-  вход (логин + пароль + ключ) → выбор сервера (узла) → пароль сервера.
-
-Собирается статистика реальных действий в сессии:
-  - успешные/неуспешные попытки входа + причины отказа
-  - выбор сервера (узла)
-  - успешный/неуспешный доступ к серверу
-
-Диаграммы сохраняются в 2 папки:
-  charts/main/   — основные
-  charts/extra/  — дополнительные
-
-Команды в консоли:
-  chart  — построить диаграммы
-  table  — табличная сводка статистики
-
-Переменные берутся из .env (python-dotenv) + os.environ. См. .env.example.
-"""
 from __future__ import annotations
 
 import argparse
@@ -146,6 +127,17 @@ def new_stats() -> dict:
         "node_access_denied_reasons": defaultdict(int),
     }
 
+def _inc(stats: dict, field: str, key: str, amount: int = 1) -> None:
+    """
+    Инкремент счётчика stats[field][key].
+    В CLI мы используем defaultdict(int), а во Flask (cookie-session) структуры
+    сериализуются в обычные dict — поэтому делаем безопасно.
+    """
+    bucket = stats.get(field)
+    if not isinstance(bucket, dict):
+        bucket = {}
+        stats[field] = bucket
+    bucket[key] = int(bucket.get(key, 0)) + int(amount)
 
 def log_issued_credentials_safe(log: logging.Logger) -> None:
     log.info(
@@ -213,7 +205,10 @@ def build_charts(log: logging.Logger, stats: dict) -> dict[str, list[Path]]:
     else:
         ax.text(0.5, 0.5, "нет данных входа", ha="center", va="center")
         ax.set_axis_off()
-    # (удалено) дополнительные диаграммы
+    p3 = MAIN_CHARTS_DIR / "login_detail.png"
+    _save_fig(fig, p3)
+    out["main"].append(p3)
+    log.info("chart(main): %s", p3.name)
 
     fig, ax = plt.subplots(figsize=(8, 4))
     all_ids = sorted(set(node_ok) | set(node_sel) | set(node_deny_by) | {nid for nid, _ in NODE_CATALOG})
@@ -243,7 +238,10 @@ def build_charts(log: logging.Logger, stats: dict) -> dict[str, list[Path]]:
     )
     ax.set_title("Успехи: вход в систему и доступ к узлу")
     ax.set_ylabel("Количество")
-    fig.tight_layout()
+    p6 = MAIN_CHARTS_DIR / "success_summary.png"
+    _save_fig(fig, p6)
+    out["main"].append(p6)
+    log.info("chart(main): %s", p6.name)
     return out
 
 
@@ -301,8 +299,8 @@ def try_access(
 
     def deny(reason: str) -> None:
         log.warning("access_denied reason=%s user=%r", reason, login or "?")
-        stats["denied"] += 1
-        stats["deny_reasons"][reason] += 1
+        stats["denied"] = int(stats.get("denied", 0)) + 1
+        _inc(stats, "deny_reasons", reason)
 
     if not login:
         deny("empty_login")
@@ -324,12 +322,12 @@ def try_access(
         return False
 
     log.info("access_granted user=%s — сессия: можно выбирать узел", login)
-    stats["granted"] += 1
+    stats["granted"] = int(stats.get("granted", 0)) + 1
     return True
 
 
 def record_node_selection(stats: dict, node_id: str) -> None:
-    stats["node_selections"][node_id] += 1
+    _inc(stats, "node_selections", node_id)
 
 
 def try_node_access(log: logging.Logger, node_id: str, password: str, stats: dict) -> bool:
@@ -338,9 +336,9 @@ def try_node_access(log: logging.Logger, node_id: str, password: str, stats: dic
 
     def deny(reason: str) -> None:
         log.warning("node_access_denied node=%s reason=%s", node_id or "?", reason)
-        stats["node_access_denied_reasons"][reason] += 1
+        _inc(stats, "node_access_denied_reasons", reason)
         if node_id in known_node_ids() and reason in ("empty_node_password", "wrong_node_password"):
-            stats["node_access_denied_by_node"][node_id] += 1
+            _inc(stats, "node_access_denied_by_node", node_id)
 
     if node_id not in known_node_ids():
         deny("unknown_node")
@@ -353,7 +351,7 @@ def try_node_access(log: logging.Logger, node_id: str, password: str, stats: dic
         return False
 
     log.info("node_access_granted node=%s", node_id)
-    stats["node_access_granted"][node_id] += 1
+    _inc(stats, "node_access_granted", node_id)
     return True
 
 
@@ -414,7 +412,7 @@ def interactive(log: logging.Logger) -> None:
         if try_access(log, login, password, key, stats):
             _node_session_cli(log, stats)
         else:
-            print("Вход запрещён.\n")
+            print("Вход запрещён\n")
 
     if stats["granted"] + stats["denied"] > 0:
         build_charts(log, stats)

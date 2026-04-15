@@ -1,17 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Flask фронт для Replit/браузера: вход → выбор сервера (узла) → модальное окно пароля узла.
 
-Запуск локально:
-  pip install -r requirements.txt
-  python web_app.py
-
-Переменные (берутся из .env через python-dotenv, если файл есть):
-  LAB_LOGIN, LAB_PASSWORD, SUPERCOMPUTER_ACCESS_KEY
-  NODE_PASSWORD_ALPHA / BETA / GAMMA
-  FLASK_SECRET_KEY (для cookie-сессии)
-"""
 from __future__ import annotations
 
 import os
