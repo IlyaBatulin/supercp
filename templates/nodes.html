@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Узлы{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card p-4">
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div>
+            <h4 class="mb-1">Выбор сервера</h4>
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-dark table-hover align-middle">
+            <thead>
+              <tr>
+                <th style="width: 140px;">ID</th>
+                <th>Описание</th>
+                <th style="width: 170px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for nid, title in nodes %}
+                <tr>
+                  <td><code>{{ nid }}</code></td>
+                  <td>{{ title }}</td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#nodeModal"
+                            data-node-id="{{ nid }}"
+                            data-node-title="{{ title }}">
+                      Подключиться
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="nodeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-white" style="border: 1px solid rgba(255,255,255,0.12);">
+        <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.12);">
+          <h5 class="modal-title">Пароль сервера</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="post" action="{{ url_for('nodes_access') }}">
+          <div class="modal-body">
+            <input type="hidden" name="node_id" id="node_id" />
+            <div class="mb-2 text-muted" id="node_title"></div>
+            <div class="mb-3">
+              <label class="form-label">Пароль сервера</label>
+              <input class="form-control" type="password" name="node_password" id="node_password" required />
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid rgba(255,255,255,0.12);">
+            <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Отмена</button>
+            <button type="submit" class="btn btn-success">OK</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const nodeModal = document.getElementById('nodeModal');
+    nodeModal.addEventListener('show.bs.modal', event => {
+      const button = event.relatedTarget;
+      const nodeId = button.getAttribute('data-node-id');
+      const nodeTitle = button.getAttribute('data-node-title');
+
+      document.getElementById('node_id').value = nodeId;
+      document.getElementById('node_title').textContent = `${nodeId} — ${nodeTitle}`;
+
+      const pw = document.getElementById('node_password');
+      pw.value = '';
+      setTimeout(() => pw.focus(), 150);
+    });
+  </script>
+{% endblock %}
+
