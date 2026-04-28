@@ -1,6 +1,5 @@
 modules = ["python-3.12", "web", "bash"]
-[agent]
-expertMode = true
+run = "bash scripts/deploy_replit.sh"
 
 [nix]
 channel = "stable-25_05"
@@ -11,32 +10,16 @@ runButton = "Project"
 [[workflows.workflow]]
 name = "Project"
 mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
-
-[[workflows.workflow]]
-name = "Start application"
-author = "agent"
+author = "user"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python web_app.py"
-waitForPort = 5000
+args = "bash scripts/deploy_replit.sh"
+waitForPort = 8000
 
 [workflows.workflow.metadata]
 outputType = "webview"
 
 [[ports]]
-localPort = 5000
+localPort = 8000
 externalPort = 80
-
-[[ports]]
-localPort = 5001
-externalPort = 3000
-
-[deployment]
-deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind=0.0.0.0:5000", "--reuse-port", "web_app:app"]

@@ -127,6 +127,7 @@ def new_stats() -> dict:
         "node_access_denied_reasons": defaultdict(int),
     }
 
+
 def _inc(stats: dict, field: str, key: str, amount: int = 1) -> None:
     """
     Инкремент счётчика stats[field][key].
@@ -138,6 +139,7 @@ def _inc(stats: dict, field: str, key: str, amount: int = 1) -> None:
         bucket = {}
         stats[field] = bucket
     bucket[key] = int(bucket.get(key, 0)) + int(amount)
+
 
 def log_issued_credentials_safe(log: logging.Logger) -> None:
     log.info(

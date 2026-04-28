@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Контроль доступа к вычислительному кластеру</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #eef3f8;
+        --card: #ffffff;
+        --text: #172033;
+        --muted: #5d6b82;
+        --primary: #1d4ed8;
+        --success: #15803d;
+        --danger: #b91c1c;
+        --warning: #a16207;
+        --border: #d7deea;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+        line-height: 1.5;
+      }
+
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 32px 20px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(23, 32, 51, 0.08);
+        margin-bottom: 20px;
+        padding: 24px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      input,
+      select,
+      button {
+        border-radius: 10px;
+        box-sizing: border-box;
+        font: inherit;
+        padding: 10px 12px;
+        width: 100%;
+      }
+
+      input,
+      select {
+        border: 1px solid var(--border);
+        margin-bottom: 14px;
+      }
+
+      button {
+        background: var(--primary);
+        border: 0;
+        color: white;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      button.secondary {
+        background: var(--muted);
+      }
+
+      button.link-button {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+
+      code,
+      pre {
+        background: #f3f6fb;
+        border-radius: 8px;
+        color: #0f172a;
+      }
+
+      code {
+        padding: 2px 6px;
+      }
+
+      pre {
+        overflow-x: auto;
+        padding: 16px;
+      }
+
+      .description {
+        border-left: 5px solid var(--primary);
+      }
+
+      .message {
+        border-radius: 12px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        padding: 14px 16px;
+      }
+
+      .message.success {
+        background: #dcfce7;
+        color: var(--success);
+      }
+
+      .message.danger {
+        background: #fee2e2;
+        color: var(--danger);
+      }
+
+      .message.warning {
+        background: #fef3c7;
+        color: var(--warning);
+      }
+
+      .message.info {
+        background: #dbeafe;
+        color: var(--primary);
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .env-list {
+        columns: 2;
+      }
+
+      .hero {
+        margin-bottom: 24px;
+        text-align: center;
+      }
+
+      .hero h1 {
+        margin-bottom: 8px;
+      }
+
+      .app-shell {
+        margin: 0 auto;
+        max-width: 760px;
+      }
+
+      .status-line {
+        border-radius: 999px;
+        display: inline-block;
+        font-size: 14px;
+        margin-top: 8px;
+        padding: 6px 12px;
+      }
+
+      .status-line.ok {
+        background: #dcfce7;
+        color: var(--success);
+      }
+
+      .status-line.locked {
+        background: #e2e8f0;
+        color: var(--muted);
+      }
+
+      .technical {
+        margin: 28px auto 0;
+        max-width: 760px;
+      }
+
+      .technical summary {
+        background: var(--muted);
+        border-radius: 12px;
+        color: white;
+        cursor: pointer;
+        font-weight: 700;
+        list-style: none;
+        padding: 12px 16px;
+        text-align: center;
+      }
+
+      .technical summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .technical-body {
+        margin-top: 16px;
+      }
+
+      .dashboard-header {
+        align-items: start;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .dashboard-header form {
+        min-width: 120px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <h1>Контроль доступа</h1>
+        <p class="muted">
+          Вход в систему и подключение к серверному узлу вычислительного кластера.
+        </p>
+        <span class="status-line {% if logged_in %}ok{% else %}locked{% endif %}">
+          {% if logged_in %}
+            Доступ к выбору узла открыт
+          {% else %}
+            Выполните вход для выбора узла
+          {% endif %}
+        </span>
+      </header>
+
+      {% if message %}
+        <div class="message {{ message_type }}">{{ message }}</div>
+      {% endif %}
+
+      {% if not logged_in %}
+        <section class="app-shell">
+          <!--
+            Первый экран содержит только вход.
+            После успешной проверки открывается личный кабинет с узлами.
+          -->
+          <form class="card" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="login">
+            <h2>Вход в систему</h2>
+            <label for="login">Логин</label>
+            <input id="login" name="login" autocomplete="username" required>
+
+            <label for="password">Пароль</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+            <label for="key">Ключ доступа</label>
+            <input id="key" name="key" type="password" required>
+
+            <button type="submit">Войти</button>
+          </form>
+        </section>
+      {% else %}
+        <section class="app-shell">
+          <div class="card">
+            <div class="dashboard-header">
+              <div>
+                <h2>Личный кабинет</h2>
+                <p class="muted">
+                  Выберите серверный узел и введите пароль для подключения.
+                </p>
+              </div>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="logout">
+                <button class="link-button" type="submit">Выйти</button>
+              </form>
+            </div>
+
+            <!--
+              Форма выбора узла активирует второй этап контроля:
+              main.record_node_selection() и main.try_node_access().
+            -->
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="node">
+              <label for="node_id">Серверный узел</label>
+              <select id="node_id" name="node_id">
+                {% for node_id, node_title in nodes %}
+                  <option value="{{ node_id }}">{{ node_id }} - {{ node_title }}</option>
+                {% endfor %}
+              </select>
+
+              <label for="node_password">Пароль узла</label>
+              <input id="node_password" name="node_password" type="password" required>
+
+              <button type="submit">Подключиться к узлу</button>
+            </form>
+          </div>
+        </section>
+      {% endif %}
+
+      <details class="technical">
+        <summary>Техническая информация</summary>
+        <div class="technical-body">
+          <!--
+            Description нужен по заданию для Replit-шаблона.
+            Он скрыт в техническом блоке, чтобы не перегружать основную страницу.
+          -->
+          <section class="card description">
+            <h2>Description</h2>
+            <p>
+              Шаблон демонстрирует SaaS-компонент на Django для модели контроля
+              доступа: пользователь вводит логин, пароль и ключ доступа, затем
+              выбирает узел вычислительного кластера и вводит пароль узла.
+              Результаты операций сохраняются в сессии браузера.
+            </p>
+            <p>
+              Если в бесплатной версии Replit недоступен отдельный Django-шаблон,
+              создайте обычную Python-реплику, установите зависимости из
+              <code>requirements.txt</code> и запустите проект командой
+              <code>python manage.py runserver 0.0.0.0:${PORT:-8000}</code>.
+            </p>
+            <p>Пользователь может изменить следующие переменные окружения:</p>
+            <ul class="env-list">
+              {% for env_var in env_vars %}
+                <li><code>{{ env_var }}</code></li>
+              {% endfor %}
+            </ul>
+          </section>
+
+          <!--
+            Этот блок оставлен специально для демонстрации преподавателю:
+            страница сформирована Django view и Django template engine.
+          -->
+          <section class="card">
+            <h2>Подтверждение Django</h2>
+            <p>
+              Приложение запущено на Django <code>{{ django_version }}</code>.
+              Главная страница возвращается представлением
+              <code>access_control.views.index</code>, маршрут описан в
+              <code>access_control/urls.py</code>, шаблон страницы находится в
+              <code>access_control/templates/access_control/index.html</code>.
+            </p>
+          </section>
+
+          <!--
+            Статистика формируется функцией main.format_tables().
+            Она показывает число успешных и ошибочных входов, причины отказов,
+            выборы узлов и результат доступа к каждому узлу.
+          -->
+          <section class="card">
+            <h2>Статистика текущей сессии</h2>
+            <pre>{{ stats_table }}</pre>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="reset">
+              <button class="secondary" type="submit">Сбросить сессию</button>
+            </form>
+          </section>
+        </div>
+      </details>
+    </main>
+  </body>
+</html>
