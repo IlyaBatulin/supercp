@@ -11,6 +11,14 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 # Replit exposes dynamic hostnames, so the educational deployment keeps hosts open.
 # For production, replace this with a concrete domain list.
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        "https://*.replit.dev,https://*.repl.co",
+    ).split(",")
+    if origin.strip()
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
