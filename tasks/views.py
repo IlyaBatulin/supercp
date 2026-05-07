@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 from django import get_version
@@ -9,11 +10,10 @@ from django.shortcuts import render
 
 import main as lab
 
-LOG = logging.getLogger("lab.django")
+LOG = logging.getLogger("lab.django.tasks")
 
 
 def _plain_stats(stats: dict[str, Any]) -> dict[str, Any]:
-    """Convert defaultdict buckets from CLI logic into JSON-session-safe dicts."""
     return {
         "granted": int(stats.get("granted", 0)),
         "denied": int(stats.get("denied", 0)),
@@ -36,13 +36,9 @@ def index(request: HttpRequest) -> HttpResponse:
     stats = _session_stats(request)
     message = ""
     message_type = "info"
-    request_scheme = request.scheme.upper()
-    request_host = request.get_host()
-    is_secure_request = request.is_secure()
 
     if request.method == "POST":
         action = request.POST.get("action", "")
-
         if action == "login":
             ok = lab.try_access(
                 LOG,
@@ -53,61 +49,62 @@ def index(request: HttpRequest) -> HttpResponse:
             )
             request.session["logged_in"] = ok
             if ok:
-                message = "Вход успешен. Теперь можно выбрать серверный узел."
+                message = "Вход выполнен. Можно переходить к задачам и узлам."
                 message_type = "success"
             else:
-                message = "Вход запрещен. Проверьте логин, пароль и ключ доступа."
+                message = "Вход запрещён. Проверьте логин, пароль и ключ."
                 message_type = "danger"
-
         elif action == "node":
             if not request.session.get("logged_in"):
-                message = "Сначала выполните успешный вход в систему."
+                message = "Сначала выполните вход."
                 message_type = "warning"
             else:
                 node_id = (request.POST.get("node_id") or "").strip().lower()
                 lab.record_node_selection(stats, node_id)
                 ok = lab.try_node_access(LOG, node_id, request.POST.get("node_password", ""), stats)
                 if ok:
-                    message = f"Доступ к узлу {node_id} разрешен."
+                    message = f"Доступ к узлу {node_id} разрешён."
                     message_type = "success"
                 else:
-                    message = f"Доступ к узлу {node_id or '?'} запрещен."
+                    message = f"Доступ к узлу {node_id or '?'} запрещён."
                     message_type = "danger"
-
-        elif action == "reset":
-            stats = _plain_stats(lab.new_stats())
-            request.session["logged_in"] = False
-            message = "Статистика и состояние входа сброшены."
-            message_type = "info"
-
         elif action == "logout":
             request.session["logged_in"] = False
-            message = "Вы вышли из личного кабинета."
+            message = "Сессия завершена."
             message_type = "info"
 
         request.session["stats"] = _plain_stats(stats)
         request.session.modified = True
 
     context = {
-        "nodes": lab.NODE_CATALOG,
+        "student_fio": os.environ.get("STUDENT_FIO", "Батулин И.И."),
         "logged_in": bool(request.session.get("logged_in")),
         "message": message,
         "message_type": message_type,
-        "django_version": get_version(),
-        "request_scheme": request_scheme,
-        "request_host": request_host,
-        "is_secure_request": is_secure_request,
+        "nodes": lab.NODE_CATALOG,
         "stats_table": lab.format_tables(_plain_stats(stats)),
-        "env_vars": [
+        "django_version": get_version(),
+        "today_tasks": [
+            "Подготовить Replit-окружение и переменные.",
+            "Выполнить вход по логину, паролю и ключу.",
+            "Подключить узел alpha и проверить доступ.",
+            "Подключить узел beta и проверить доступ.",
+            "Подключить узел gamma и проверить доступ.",
+            "Проверить статистику и собрать скриншоты.",
+            "Подготовить и отправить отчёт по ЛР4.",
+        ],
+        "description_vars": [
             "LAB_LOGIN",
             "LAB_PASSWORD",
             "SUPERCOMPUTER_ACCESS_KEY",
             "NODE_PASSWORD_ALPHA",
             "NODE_PASSWORD_BETA",
             "NODE_PASSWORD_GAMMA",
+            "STUDENT_FIO",
             "DJANGO_SECRET_KEY",
             "DJANGO_ALLOWED_HOSTS",
             "DJANGO_CSRF_TRUSTED_ORIGINS",
+            "PORT",
         ],
     }
-    return render(request, "access_control/index.html", context)
+    return render(request, "tasks/index.html", context)

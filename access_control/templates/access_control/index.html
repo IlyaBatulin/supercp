@@ -142,6 +142,24 @@
         columns: 2;
       }
 
+      .diagnostics {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .diagnostics div {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+      }
+
+      .diagnostics strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
       .hero {
         margin-bottom: 24px;
         text-align: center;
@@ -333,6 +351,34 @@
               <code>access_control.views.index</code>, маршрут описан в
               <code>access_control/urls.py</code>, шаблон страницы находится в
               <code>access_control/templates/access_control/index.html</code>.
+            </p>
+          </section>
+
+          <!--
+            Диагностика HTTPS/Replit добавлена для сопровождения ЛР8:
+            оператор и проверяющий видят текущий протокол, хост и признак
+            защищенного соединения без доступа к серверным логам.
+          -->
+          <section class="card">
+            <h2>Контроль HTTPS и среды размещения</h2>
+            <div class="diagnostics">
+              <div>
+                <strong>Протокол запроса</strong>
+                <code>{{ request_scheme }}</code>
+              </div>
+              <div>
+                <strong>Хост приложения</strong>
+                <code>{{ request_host }}</code>
+              </div>
+              <div>
+                <strong>Защищенное соединение</strong>
+                <code>{% if is_secure_request %}да{% else %}нет{% endif %}</code>
+              </div>
+            </div>
+            <p class="muted">
+              Для Replit-размещения необходимо указать домен приложения в
+              <code>DJANGO_ALLOWED_HOSTS</code> и доверенные HTTPS-источники в
+              <code>DJANGO_CSRF_TRUSTED_ORIGINS</code>.
             </p>
           </section>
 

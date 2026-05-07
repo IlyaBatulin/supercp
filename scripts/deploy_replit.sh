@@ -11,7 +11,7 @@ echo "Starting Django server for Replit..."
 echo "Configurable variables:"
 echo "  LAB_LOGIN, LAB_PASSWORD, SUPERCOMPUTER_ACCESS_KEY"
 echo "  NODE_PASSWORD_ALPHA, NODE_PASSWORD_BETA, NODE_PASSWORD_GAMMA"
-echo "  DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, PORT"
+echo "  STUDENT_FIO, DJANGO_SECRET_KEY, DJANGO_ALLOWED_HOSTS, PORT"
 
 PORT="${PORT:-8000}"
 python manage.py runserver "0.0.0.0:${PORT}"

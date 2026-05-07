@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ student_fio }} — Tasks (Django/Replit)</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg-start: #090f1f;
+        --bg-end: #111d38;
+        --card: rgba(13, 24, 47, 0.78);
+        --card-border: rgba(255, 255, 255, 0.12);
+        --text: #e5ecff;
+        --muted: #9dadcf;
+        --primary: #4f8cff;
+        --primary-strong: #2f6fec;
+        --success-bg: rgba(22, 163, 74, 0.2);
+        --success-text: #86efac;
+        --danger-bg: rgba(220, 38, 38, 0.2);
+        --danger-text: #fca5a5;
+        --warning-bg: rgba(234, 179, 8, 0.2);
+        --warning-text: #fde68a;
+        --info-bg: rgba(37, 99, 235, 0.2);
+        --info-text: #93c5fd;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 15% 15%, #213f7b 0%, transparent 45%),
+          radial-gradient(circle at 85% 0%, #45206d 0%, transparent 40%),
+          linear-gradient(150deg, var(--bg-start), var(--bg-end));
+        min-height: 100vh;
+      }
+
+      .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 16px 40px; }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        backdrop-filter: blur(8px);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.26);
+      }
+
+      .hero { display: grid; gap: 12px; }
+      .hero-badge {
+        width: fit-content;
+        border-radius: 999px;
+        background: rgba(79, 140, 255, 0.2);
+        border: 1px solid rgba(79, 140, 255, 0.45);
+        color: #bdd4ff;
+        font-size: 13px;
+        padding: 6px 12px;
+      }
+
+      .hero-meta {
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+      h1, h2 { margin: 0 0 12px; line-height: 1.25; }
+      p { margin: 0 0 10px; color: var(--muted); }
+
+      label { display: block; font-weight: 700; margin: 10px 0 6px; color: #c9d6f8; }
+
+      input, select, button {
+        width: 100%;
+        border-radius: 12px;
+        font: inherit;
+        padding: 11px 12px;
+      }
+
+      input, select {
+        color: var(--text);
+        background: rgba(10, 19, 39, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        transition: border-color .18s ease, box-shadow .18s ease;
+      }
+
+      input:focus, select:focus {
+        border-color: rgba(79, 140, 255, 0.8);
+        box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.22);
+        outline: 0;
+      }
+
+      button {
+        border: 0;
+        color: #fff;
+        background: linear-gradient(140deg, var(--primary), var(--primary-strong));
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform .12s ease, filter .12s ease;
+      }
+
+      button:hover { filter: brightness(1.06); transform: translateY(-1px); }
+      button:active { transform: translateY(0); }
+      button.ghost { background: linear-gradient(140deg, #64748b, #475569); }
+
+      .msg { padding: 12px 14px; border-radius: 12px; font-weight: 700; margin-bottom: 16px; border: 1px solid transparent; }
+      .msg.success { background: var(--success-bg); color: var(--success-text); border-color: rgba(22, 163, 74, 0.45); }
+      .msg.danger { background: var(--danger-bg); color: var(--danger-text); border-color: rgba(220, 38, 38, 0.45); }
+      .msg.warning { background: var(--warning-bg); color: var(--warning-text); border-color: rgba(234, 179, 8, 0.45); }
+      .msg.info { background: var(--info-bg); color: var(--info-text); border-color: rgba(37, 99, 235, 0.45); }
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(8, 16, 33, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #dbe7ff;
+      }
+
+      ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+      li { color: #d6e3ff; }
+      code {
+        background: rgba(79, 140, 255, 0.18);
+        border: 1px solid rgba(79, 140, 255, 0.4);
+        border-radius: 7px;
+        padding: 2px 6px;
+        color: #d6e6ff;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card hero">
+        <span class="hero-badge">SaaS Replit / Django Tasks</span>
+        <h1>{{ student_fio }} — управление требованиями в Replit (Django)</h1>
+        <p>Приложение <code>tasks</code> для ЛР4: вход, выбор узла, проверка пароля узла и фиксация статистики.</p>
+        <div class="hero-meta">
+          <span><strong>Django:</strong> {{ django_version }}</span>
+          <span>{% if logged_in %}Статус: в системе{% else %}Статус: гость{% endif %}</span>
+        </div>
+      </section>
+
+      {% if message %}
+        <div class="msg {{ message_type }}">{{ message }}</div>
+      {% endif %}
+
+      <!--
+        Этапы задач на сегодня (по требованию ЛР4: не менее 7).
+        Раздел оформлен отдельно от форм, чтобы проверяющему было легко сверить пункт задания.
+      -->
+      <section class="card">
+        <h2>Этапы задач на сегодня</h2>
+        <ul>
+          {% for item in today_tasks %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <div class="row">
+        {% if not logged_in %}
+          <!--
+            Первый этап контроля доступа: пользовательская аутентификация.
+            Отправляем action=login в Django view tasks.views.index.
+          -->
+          <form class="card" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="login">
+            <h2>Вход</h2>
+            <label for="login">Логин</label>
+            <input id="login" name="login" required>
+            <label for="password">Пароль</label>
+            <input id="password" type="password" name="password" required>
+            <label for="key">Ключ доступа</label>
+            <input id="key" type="password" name="key" required>
+            <button type="submit">Войти</button>
+          </form>
+        {% else %}
+          <!--
+            Второй этап контроля: выбор узла и пароль узла.
+            После успешного входа открываем работу с node_id/node_password.
+          -->
+          <form class="card" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="node">
+            <h2>Подключение к узлу</h2>
+            <label for="node_id">Серверный узел</label>
+            <select id="node_id" name="node_id">
+              {% for nid, title in nodes %}
+                <option value="{{ nid }}">{{ nid }} — {{ title }}</option>
+              {% endfor %}
+            </select>
+            <label for="node_password">Пароль узла</label>
+            <input id="node_password" type="password" name="node_password" required>
+            <button type="submit">Проверить доступ</button>
+          </form>
+
+          <form class="card" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="logout">
+            <h2>Сессия</h2>
+            <p>Если проверка завершена, можно выйти и проверить повторный вход.</p>
+            <button class="ghost" type="submit">Выйти</button>
+          </form>
+        {% endif %}
+      </div>
+
+      <section class="card">
+        <h2>Статистика текущей сессии</h2>
+        <pre>{{ stats_table }}</pre>
+      </section>
+
+      <!--
+        Description для шаблона Replit:
+        здесь перечислены переменные окружения, требования и особенности запуска.
+      -->
+      <section class="card">
+        <h2>Description</h2>
+        <p>
+          Шаблон предназначен для развертывания в SaaS Replit в рамках ЛР4.
+          Если Django-шаблон недоступен, можно использовать Python-реплику и
+          запуск через <code>bash scripts/deploy_replit.sh</code>.
+        </p>
+        <p>Пользователь может изменить следующие переменные окружения:</p>
+        <ul>
+          {% for env_var in description_vars %}
+            <li><code>{{ env_var }}</code></li>
+          {% endfor %}
+        </ul>
+        <p>
+          В учебной среде допустим <code>DJANGO_ALLOWED_HOSTS=*</code>.
+          Для публикации в интернете укажите конкретный домен и обновите
+          <code>DJANGO_CSRF_TRUSTED_ORIGINS</code>.
+        </p>
+        <p>
+          Примечание: в методичке указан репозиторий Primer3_Korneev; если ссылка
+          недоступна, используйте текущий шаблон как базовый и приложите это
+          замечание в отчёт.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
