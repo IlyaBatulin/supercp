@@ -213,13 +213,30 @@ def build_charts(log: logging.Logger, stats: dict) -> dict[str, list[Path]]:
     log.info("chart(main): %s", p3.name)
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    all_ids = sorted(set(node_ok) | set(node_sel) | set(node_deny_by) | {nid for nid, _ in NODE_CATALOG})
+    all_ids = sorted(
+        set(node_ok)
+        | set(node_sel)
+        | set(node_deny_by)
+        | {nid for nid, _ in NODE_CATALOG}
+    )
     ok_vals = [node_ok.get(i, 0) for i in all_ids]
     bad_vals = [node_deny_by.get(i, 0) for i in all_ids]
     x = range(len(all_ids))
     w = 0.36
-    ax.bar([xi - w / 2 for xi in x], ok_vals, width=w, label="доступ к узлу разрешён", color="#2ca02c")
-    ax.bar([xi + w / 2 for xi in x], bad_vals, width=w, label="отказ (неверный/пустой пароль узла)", color="#d62728")
+    ax.bar(
+        [xi - w / 2 for xi in x],
+        ok_vals,
+        width=w,
+        label="доступ к узлу разрешён",
+        color="#2ca02c",
+    )
+    ax.bar(
+        [xi + w / 2 for xi in x],
+        bad_vals,
+        width=w,
+        label="отказ (неверный/пустой пароль узла)",
+        color="#d62728",
+    )
     ax.set_xticks(list(x))
     ax.set_xticklabels(list(all_ids))
     ax.set_title("Доступ к узлам: успехи и отказы по узлу")
@@ -332,14 +349,19 @@ def record_node_selection(stats: dict, node_id: str) -> None:
     _inc(stats, "node_selections", node_id)
 
 
-def try_node_access(log: logging.Logger, node_id: str, password: str, stats: dict) -> bool:
+def try_node_access(
+    log: logging.Logger, node_id: str, password: str, stats: dict
+) -> bool:
     node_id = (node_id or "").strip().lower()
     password = password or ""
 
     def deny(reason: str) -> None:
         log.warning("node_access_denied node=%s reason=%s", node_id or "?", reason)
         _inc(stats, "node_access_denied_reasons", reason)
-        if node_id in known_node_ids() and reason in ("empty_node_password", "wrong_node_password"):
+        if node_id in known_node_ids() and reason in (
+            "empty_node_password",
+            "wrong_node_password",
+        ):
             _inc(stats, "node_access_denied_by_node", node_id)
 
     if node_id not in known_node_ids():
